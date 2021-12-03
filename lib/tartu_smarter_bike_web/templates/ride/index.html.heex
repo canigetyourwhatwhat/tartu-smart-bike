@@ -1,0 +1,29 @@
+<h1>Ride history</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th> Bike </th>
+      <th colspan="2"> Start time/address </th>
+      <th colspan="2"> Finish time/address </th>
+      <th> Distance (km) </th>
+      <th> Saved CO<sub>2</sub> </th>
+      <th> Invoice </th>
+    </tr>
+  </thead>
+  <tbody>
+<%= for ride <- @rides do %>
+    <tr>
+      <td><%= elem(ride, 0) %></td>
+      <td><%= String.replace(elem(ride, 1).inserted_at |> to_string, "T", " " ) %></td>
+      <td><%= elem(ride, 1).departure %></td>
+      <td><%= String.replace(elem(ride, 1).updated_at |> to_string, "T", " ") %></td>
+      <td><%= elem(ride, 1).destination %></td>
+      <td><%= elem(ride, 1).distance/1000 %></td>
+      <td><%= Decimal.round(Decimal.from_float((elem(ride, 1).distance/10)*3), 2) %></td>
+      <td><%= "invoice" %></td>
+
+    </tr>
+<% end %>
+  </tbody>
+</table>

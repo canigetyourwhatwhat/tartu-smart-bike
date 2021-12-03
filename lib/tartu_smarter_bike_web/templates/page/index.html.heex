@@ -1,0 +1,18 @@
+<section>
+  <nav>
+    <%= if TartuSmarterBike.Authentication.load_current_user(@conn) do %>
+      <%= if @ride do %>
+        <%= if @ride.status == "booked" do %>
+          <%= @bike.id_code %>
+          <%= link "Unlock the bike", to: Routes.ride_path(@conn, :new) %>
+        <% else %>
+          <%= link "Lock the bike", to: Routes.ride_path(@conn, :arrived_form) %>
+        <% end %>
+      <% else %>
+          <%= link "Unlock the bike", to: Routes.ride_path(@conn, :new) %>
+      <% end %>
+
+     <%= link "Report an issue ", to: Routes.ride_path(@conn, :report_form) %>
+    <% end %>
+  </nav>
+</section>

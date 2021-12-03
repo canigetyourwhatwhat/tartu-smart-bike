@@ -1,0 +1,10 @@
+docker-compose.yaml
+Dockerfile
+.dockerignore
+.env
+.env.example
+.github/
+.gitignore
+postgres/
+README.md
+

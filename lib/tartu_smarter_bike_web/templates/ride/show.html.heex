@@ -1,0 +1,38 @@
+<h1>Show Ride</h1>
+
+<ul>
+
+  <li>
+    <strong>User:</strong>
+    <%= @ride.user %>
+  </li>
+
+  <li>
+    <strong>Bike:</strong>
+    <%= @ride.bike %>
+  </li>
+
+  <li>
+    <strong>Distance:</strong>
+    <%= @ride.distance %>
+  </li>
+
+  <li>
+    <strong>Start time:</strong>
+    <%= @ride.start_time %>
+  </li>
+
+  <li>
+    <strong>End time:</strong>
+    <%= @ride.end_time %>
+  </li>
+
+  <li>
+    <strong>Invoice:</strong>
+    <%= @ride.invoice %>
+  </li>
+
+</ul>
+
+<span><%= link "Edit", to: Routes.ride_path(@conn, :edit, @ride) %></span> |
+<span><%= link "Back", to: Routes.ride_path(@conn, :index) %></span>

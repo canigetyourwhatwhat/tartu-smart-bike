@@ -1,0 +1,268 @@
+<head>
+    <title></title>
+    <meta charset="utf-8" />
+    <meta name="csrf" content="<%= Plug.CSRFProtection.get_csrf_token() %>">
+
+    <!-- Reference to the Bing Maps SDK -->
+    <script type='text/javascript'
+            src='http://www.bing.com/api/maps/mapcontrol?callback=GetMap'
+            async defer></script>
+
+
+     <style>
+        /* CSS styles used by custom infobox template */
+        .customInfobox {
+            background-color: rgba(0,0,0,0.6);
+            color: white;
+            max-width: 15rem;
+            border-radius: 5px;
+            padding: 0.5rem;
+            font-size: 1rem;
+            pointer-events: auto !important;
+        }
+
+        .customInfobox .title {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        #map_button {
+            width: 100%;
+        }
+    </style>
+
+</head>
+<body>
+  <h1>Map</h1>
+
+  <div id='searchBoxContainer'>
+    <input type="search" id="map-search-box" placeholder="Start typing the dock station name">
+  </div>
+
+  <div id="alert-placeholder">
+
+  </div>
+  <div id="myMap" style="height:60vh;"></div>
+</body>
+
+<script type='text/javascript'>
+    function GetMap() {
+        let search_box = document.getElementById("map-search-box");
+
+        if (search_box){
+            search_box.addEventListener('input', (e)=>{
+                debounce(()=>{
+                    //search_box_change(e);
+                    find_dock(e);
+                },500)()
+            })
+        }
+
+
+        var main_layer = new Microsoft.Maps.Layer();
+        let search_layer = new Microsoft.Maps.Layer(); // create new layer
+        let suggestion_layer = new Microsoft.Maps.Layer(); // create new layer
+
+        var map = new Microsoft.Maps.Map('#myMap', {
+            credentials: "Ao5Ei0wW9iFqCzTqgDBkdC9rjrgv1e2XIU3-IMfGmjJR01UbWIFS-BMPtTUNQq0a",
+            center: new Microsoft.Maps.Location(58.3787425, 26.7308478)
+        });
+
+        // hide infoboxes on map click
+        Microsoft.Maps.Events.addHandler(map, 'click', function () { hide_infoboxes(); })
+
+        let infobox = new Microsoft.Maps.Infobox(map.getCenter(), {
+            //htmlContent: infoboxTemplate.replace('{title}', "").replace('{description}', ""),
+            visible: false
+        });
+        infobox.setMap(map);
+
+        let station_list = []
+
+        <%= for station <- @stations do %>
+            station_list.push({
+                id: "<%= station.id %>",
+                address: "<%= station.address %>",
+                latitude: "<%= station.latitude %>",
+                longitude: "<%= station.longitude %>",
+                available_bikes: "<%= station.available_bikes %>",
+                capacity: "<%= station.capacity %>"
+            })
+        <% end %>
+
+        station_list.forEach(station =>{
+
+            let pin = create_pin_for_layer(station)
+            main_layer.add(pin)
+            //map.entities.push(pin);
+            map.layers.insert(main_layer)
+            map.layers.insert(search_layer)
+            map.layers.insert(suggestion_layer)
+
+        })
+
+        // Autosuggest thing
+        Microsoft.Maps.loadModule('Microsoft.Maps.AutoSuggest', function () {
+            var options = {
+                maxResults: 4,
+                map: map,
+                countryCode: "EE"
+            };
+            var manager = new Microsoft.Maps.AutosuggestManager(options);
+            manager.attachAutosuggest('#map-search-box', '#searchBoxContainer', selectedSuggestion);
+        });
+
+        // Select suggestion
+        function selectedSuggestion(suggestionResult) {
+            map.entities.clear();
+            map.setView({ bounds: suggestionResult.bestView });
+            var pushpin = new Microsoft.Maps.Pushpin(suggestionResult.location, {color:"yellow"});
+            map.entities.push(pushpin);
+            calculateClosestDockstations(suggestionResult.location.latitude, suggestionResult.location.longitude);
+        }
+
+        // Distance calculator
+        function calculateClosestDockstations(lat, lon) {
+            suggestion_layer.clear()
+
+            for(let i = 0; i < map.layers.length; i++) {
+                map.layers[i.toString()].setVisible(false);
+            }
+
+            station_list.forEach(station => {
+                Microsoft.Maps.loadModule('Microsoft.Maps.SpatialMath', function () {
+                    let add_loc = new Microsoft.Maps.Location(lat, lon)
+                    var dock_loc = new Microsoft.Maps.Location(station.longitude, station.latitude);
+                    let dis = Microsoft.Maps.SpatialMath.getDistanceTo(dock_loc, add_loc, Microsoft.Maps.SpatialMath.DistanceUnits.Kilometers);
+
+                    if (dis < 0.5){
+                        // logic of pushing the station as a pin to layer
+                        console.log(`${station.address} -> ${dis}`)
+                        let pin = create_pin_for_layer(station)
+                        suggestion_layer.add(pin);
+                    }
+                });
+            })
+            infobox.setOptions({visible: false}) // Hide infoboxes
+            //map.layers.insert(suggestion_layer);
+            suggestion_layer.setVisible(true);
+
+        }
+
+        /*
+        function search_box_change(e){
+
+            if(e.target.value === ""){
+                infobox.setOptions({visible: false}) // Hide infoboxes
+                main_layer.setVisible(true); // HIDE MAIN LAYER
+            }
+        }
+        */
+
+        function find_dock(e){
+            // hide current layers
+            map.entities.clear();
+            search_layer.clear()
+
+            if(e.target.value === ""){
+                for(let i = 0; i < map.layers.length; i++) {
+                    map.layers[i.toString()].setVisible(false);
+                }
+                main_layer.setVisible(true);
+            }else{
+                for(let i = 0; i < map.layers.length; i++) {
+                    map.layers[i.toString()].setVisible(false);
+                }
+
+                station_list.forEach(station =>{
+
+                    if(station.address.toLowerCase().startsWith(e.target.value.toLowerCase())){
+                        let pin = create_pin_for_layer(station)
+                        search_layer.add(pin);
+                    }
+                })
+            }
+
+            infobox.setOptions({visible: false}) // Hide infoboxes
+            search_layer.setVisible(true); // HIDE MAIN LAYER
+            //map.layers.insert(search_layer); // insert search layer
+        }
+
+
+        function create_pin_for_layer(station){
+            var loc = new Microsoft.Maps.Location(station.longitude, station.latitude);
+            var pin = new Microsoft.Maps.Pushpin(loc);
+            pin.metadata = {
+                title: station.address,
+                description: `Capacity: ${station.capacity} </br>Available bikes: ${station.available_bikes}`
+            };
+
+            Microsoft.Maps.Events.addHandler(pin, 'click', (e)=>{
+                pushpinClicked(e, infobox, station.address, station.capacity, station.available_bikes, station.id)
+            });
+            return pin
+        }
+
+        function hide_infoboxes(){
+            infobox.setOptions({visible: false}) // Hide infoboxes
+        }
+
+    }
+
+
+
+    function pushpinClicked(e, infobox, title, capacity, available_bikes, id) {
+        //Make sure the infobox has metadata to display.
+        if (e.target.metadata) {
+
+            //Set the infobox options with the metadata of the pushpin.
+            infobox.setOptions({
+                location: e.target.getLocation(),
+                title: title,
+                description: `<p>Available: ${available_bikes}<br>Capacity: ${capacity}</p>`,
+                visible: true,
+                htmlContent: `<div class="customInfobox"><div class="title">${title}</div><p>Available: ${available_bikes}<br>Capacity: ${capacity}</p><button type="button" id="map_button" onclick="ajax_create_booking('${id}')">Book a bike</button></div>`
+            });
+        }
+    }
+
+    function ajax_create_booking(id){
+        let csrf_token = document.querySelector("meta[name='csrf-token']").getAttribute("content")
+        axios.post(
+            'rides/book',
+            {"id": id},
+            {headers: {"x-csrf-token": csrf_token }}
+        ).then(res => {
+            if (res.data.type === "error") {
+                Swal.fire({
+                        icon: 'error',
+                        text: res.data.message,
+                        confirmButtonText: 'ok',
+                        footer: '<a href="/">Take me back to Home</a>'
+                })
+            }else{
+                Swal.fire({
+                        text: res.data.message,
+                        confirmButtonText: 'Cool'
+                    })
+            }
+        })
+    }
+
+    const debounce = (func, wait) => {
+        let timeout;
+
+        return function executedFunction(...args) {
+
+            const later = () => {
+                timeout = null;
+
+                func(...args);
+            };
+            clearTimeout(timeout);
+
+            timeout = setTimeout(later, wait);
+        };
+    };
+
+</script>

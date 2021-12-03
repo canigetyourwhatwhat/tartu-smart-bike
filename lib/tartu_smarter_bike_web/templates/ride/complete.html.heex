@@ -1,0 +1,21 @@
+<h1>Ride information</h1>
+
+<p>
+  Bike ID: <strong><%= @bike.id_code %></strong>
+</p>
+
+<p>
+  Started from <strong><%= @ride.departure %></strong> at <strong><%= @ride.inserted_at %></strong>
+</p>
+
+<p>
+  Finished at <strong><%= @ride.destination %></strong> at <strong><%= @ride.updated_at %></strong>
+</p>
+
+<p>
+  Distance: <strong><%= @ride.distance/1000 %> km</strong>, (<strong><%= Decimal.round(Decimal.from_float((@ride.distance/10)*3), 2) %> m<sup>2</sup></strong> of CO<sub>2</sub> saved)
+</p>
+
+<p>
+  Invoice: <strong><%= gettext "No extra charge since it was less than 1 hour" %></strong>
+</p>

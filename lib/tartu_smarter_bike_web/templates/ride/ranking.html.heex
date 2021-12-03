@@ -1,0 +1,51 @@
+<h1>User Rankings</h1>
+
+<table>
+    <thead>
+    <tr>
+        <th colspan="2"> USER </th>
+        <th colspan="2"> TOTAL DISTANCE COVERED </th>
+        <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    <%= for ranking <- @rankings do %>
+    <tr id="ranking-table-tr">
+        <td colspan="2"><%= elem(ranking, 0) %></td>
+        <td colspan="2"><%= elem(ranking, 1) %></td>
+        <td class="medal-td"></td>
+    </tr>
+    <% end %>
+    </tbody>
+</table>
+
+<script>
+    const classesToAdd =['fas','fa-medal']
+    let rows = document.querySelectorAll('#ranking-table-tr')
+
+    let gold_medal = document.createElement("i");
+    gold_medal.classList.add(classesToAdd[0])
+    gold_medal.classList.add(classesToAdd[1])
+    gold_medal.style.color = "#FFD700"
+
+    let silver_medal = document.createElement("i");
+    silver_medal.classList.add(classesToAdd[0])
+    silver_medal.classList.add(classesToAdd[1])
+    silver_medal.style.color = "#C0C0C0"
+
+    let bronze_medal = document.createElement("i");
+    bronze_medal.classList.add(classesToAdd[0])
+    bronze_medal.classList.add(classesToAdd[1])
+    bronze_medal.style.color = "#CD7F32"
+    let medal_td = document.querySelectorAll('.medal-td')
+
+    rows.forEach((row, index)=>{
+        if (index === 0){
+            row.querySelector('.medal-td').append(gold_medal)
+        }else if (index === 1){
+            row.querySelector('.medal-td').append(silver_medal)
+        }else if (index === 2){
+            row.querySelector('.medal-td').append(bronze_medal)
+        }
+    })
+</script>

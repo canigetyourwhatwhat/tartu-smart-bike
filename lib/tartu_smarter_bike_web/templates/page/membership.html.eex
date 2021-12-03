@@ -1,0 +1,18 @@
+<%= form_for @changeset, Routes.page_path(@conn, :membership), fn f -> %>
+  <%= if @changeset.action do %>
+    <div class="alert alert-danger">
+      <p>Oops, something went wrong! Please check the errors below.</p>
+    </div>
+  <% end %>
+
+  <p>
+    <%= label f, :subscription_type %>
+    <br>
+    <%= select f, :subscription_type, ["1-year membership": "1-year membership", "1-week membership": "1-week membership", "1-day membership": "1-day membership", "1-hour membership": "1-hour membership"] ,id: "subscription_type" %>
+    <%= error_tag f, :subscription_type %>
+  </p>
+
+  <div>
+      <%= submit "Buy", id: "submit_register" %>
+  </div>
+<% end %>

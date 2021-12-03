@@ -1,0 +1,34 @@
+<h1>Account information</h1>
+
+<table>
+    <thead>
+    <tr>
+        <th colspan="2"> Name </th>
+        <th colspan="2"> Balance </th>
+        <th colspan="2"> Membership type </th>
+        <th colspan="2"> Membership ends </th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td colspan="2"><%= @user.name %></td>
+        <td colspan="2"><%= @user.balance %></td>
+        <td colspan="2"><%= @user.subscription_type %></td>
+        <td colspan="2"><%= @user.name %></td>
+
+    </tr>
+
+    <%= if TartuSmarterBike.Authentication.load_current_user(@conn).subscription_type do %>
+        <%= link "Charge with pre-paid card", to: Routes.page_path(@conn, :prepaid_form) %>
+        <br>
+        <%= link "Gift a membership", to: Routes.page_path(@conn, :gifting_form) %>
+    <% else %>
+        <%= link "Charge with pre-paid card", to: Routes.page_path(@conn, :prepaid_form) %>
+        <br>
+        <%= link "Purchase membership", to: Routes.page_path(@conn, :membership_form) %>
+    <% end %>
+
+    </tbody>
+</table>
+
+

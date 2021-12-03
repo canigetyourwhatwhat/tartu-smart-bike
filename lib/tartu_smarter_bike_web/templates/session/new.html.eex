@@ -1,0 +1,19 @@
+<%= form_for @conn, Routes.session_path(@conn, :create), [as: :session], fn session -> %>
+  <h1>Log in</h1>
+
+  <p>
+    <%= label session, :email, class: "control-label" %>
+    <br>
+    <%= text_input session, :email, class: "form-control" %>
+    <%= error_tag session, :email %>
+  </p>
+
+  <p>
+    <%= label session, :password, class: "control-label" %>
+    <br>
+    <%= password_input session, :password, class: "form-control" %>
+    <%= error_tag session, :password %>
+  </p>
+
+  <%= submit "Log in", class: "btn btn-primary", id: "submit" %>
+<% end %>

@@ -1,0 +1,15 @@
+<component name="libraryTable">
+  <library name="hound" type="mix">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/hound/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/hound/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/hound/ebin" />
+      <root url="file://$PROJECT_DIR$/_build/dev/lib/hound/ebin" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/deps/hound/lib" />
+      <root url="file://$PROJECT_DIR$/deps/hound/lib" />
+    </SOURCES>
+  </library>
+</component>

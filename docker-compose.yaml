@@ -1,0 +1,25 @@
+version: '3'
+services:
+  phoenix:
+    image: ghcr.io/mir-jalal/tartu-smarter-bike:latest
+    container_name: phoenix
+    restart: always
+    ports:
+      - "80:4000"
+    environment:
+      DATABASE_URL: ecto://tsbdbadmin:${POSTGRES_PASSWORD}@postgres/tsbdb
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:14.0-alpine3.14
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: tsbdbadmin
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: tsbdb
+    volumes:
+      - ./postgres:/var/lib/postgresql/data
+

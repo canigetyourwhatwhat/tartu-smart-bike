@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <%= csrf_meta_tag() %>
+    <%= live_title_tag assigns[:page_title] || "Tartu Smarter Bike", suffix: "" %>
+    <link phx-track-static rel="stylesheet" href={Routes.static_path(@conn, "/assets/app.css")}/>
+    <link rel="stylesheet" href="https://cdn.simplecss.org/simple.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.24.0/axios.min.js" integrity="sha512-u9akINsQsAkG9xjc1cnGF4zw5TFDwkxuc9vUp5dltDWYCSmyd0meygbvgXrlc/z7/o4a19Fb5V0OUE58J7dcyw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://kit.fontawesome.com/70f86e07f8.js" crossorigin="anonymous"></script>
+    <script defer phx-track-static type="text/javascript" src={Routes.static_path(@conn, "/assets/app.js")}></script>
+
+  </head>
+  <body>
+    <header>
+      <nav>
+        <span>
+          <%= link "Home", to: Routes.page_path(@conn, :index) %>
+          <%= link "Rankings", to: Routes.ride_path(@conn, :ranking) %>
+          <%= if TartuSmarterBike.Authentication.load_current_user(@conn) do %>
+            <%= link "Map", to: Routes.page_path(@conn, :map) %>
+            <%= link "Ride history", to: Routes.ride_path(@conn, :index) %>
+          <% end %>
+        </span>
+        <span>
+          <%= if TartuSmarterBike.Authentication.load_current_user(@conn) do %>
+            <%= link "Account settings", to: Routes.page_path(@conn, :home) %>
+            <%= link "Log out", to: Routes.session_path(@conn, :delete, TartuSmarterBike.Authentication.load_current_user(@conn)), method: "delete", id: "logout" %>
+          <% else %>
+            <%= link "Log in", to: Routes.session_path(@conn, :new) %>
+            <%= link "Register", to: Routes.user_path(@conn, :new), id: "register_button" %>
+          <% end %>
+        </span>
+      </nav>
+    </header>
+    <%= @inner_content %>
+    <footer>
+      <p>Tartu Smarter Bike © 2021</p>
+    </footer>
+  </body>
+</html>

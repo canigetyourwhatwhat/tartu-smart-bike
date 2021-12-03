@@ -1,0 +1,41 @@
+/* css/app.css */
+.alert {
+  background-color: var(--accent-bg);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 1rem;
+  text-align: center;
+}
+.alert:empty {
+  display: none;
+}
+header nav {
+  margin: 0 auto;
+  max-width: 45rem;
+}
+header nav :first-child {
+  float: left;
+}
+header nav :last-child {
+  float: right;
+}
+nav a {
+  margin: 1rem;
+}
+section nav a {
+  text-align: center;
+  display: block;
+}
+.container {
+  width: 1000px !important;
+  align-self: center;
+}
+#ranking-table-tr:nth-child(1) {
+  color: red;
+}
+#ranking-table-tr:nth-child(2) {
+  color: blue;
+}
+#ranking-table-tr:nth-child(3) {
+  color: yellow;
+}

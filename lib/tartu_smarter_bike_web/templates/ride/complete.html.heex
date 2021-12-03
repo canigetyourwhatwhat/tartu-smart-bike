@@ -13,6 +13,10 @@
 </p>
 
 <p>
+  Duration: <strong><%= Timex.diff(DateTime.utc_now, @ride.inserted_at, :hour) %></strong> 
+</p>
+
+<p>
   Distance: <strong><%= @ride.distance/1000 %> km</strong>, (<strong><%= Decimal.round(Decimal.from_float((@ride.distance/10)*3), 2) %> m<sup>2</sup></strong> of CO<sub>2</sub> saved)
 </p>
 

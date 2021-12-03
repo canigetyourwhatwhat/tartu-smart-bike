@@ -3,7 +3,6 @@ defmodule TartuSmarterBike.Accounts.User do
   import Ecto.Changeset
 
   @mail_regex ~r/^[A-Za-z0-9.%+-]+@[A-Za-z0-9.-]+.[A-Za-z]{2,4}$/
-  @list ["1-year membership", "1-week membership", "1-day membership", "1-hour membership"]
 
   schema "users" do
     field :balance, :float, default: 0.0

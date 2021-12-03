@@ -1,0 +1,22 @@
+<h1>Account information</h1>
+
+<table>
+    <thead>
+    <tr>
+        <th colspan="2"> Invoice type </th>
+        <th colspan="2"> Amount </th>
+        <th colspan="2"> Check the ride </th>
+        <th colspan="2"> Membership ends </th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr id="ranking-table-tr">
+        <td colspan="2"><%= @user.name %></td>
+        <td colspan="2"><%= @user.balance %></td>
+        <td colspan="2"><%= @user.subscription_type %></td>
+        <td colspan="2"><%= @user.name %></td>
+
+    </tr>
+
+    </tbody>
+</table>

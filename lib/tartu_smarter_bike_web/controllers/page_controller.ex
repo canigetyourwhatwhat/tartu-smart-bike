@@ -32,7 +32,14 @@ defmodule TartuSmarterBikeWeb.PageController do
 
   def home(conn, _params) do
     user = TartuSmarterBike.Authentication.load_current_user(conn)
-    render(conn, "account.html", user: user)
+    query = from r in Ride, where: r.user_id == ^user.id, select: sum(r.distance)
+    total_distance = Repo.all(query)
+    if Repo.one(query) == nil do
+      render(conn, "account.html", user: user, total_distance: 0)
+    else
+      render(conn, "account.html", user: user, total_distance: total_distance)
+    end
+
   end
 
 
@@ -164,15 +171,16 @@ defmodule TartuSmarterBikeWeb.PageController do
   end
 
   def gifting(conn, %{"user" => param}) do
-    gifting_user = param["gifting_user_email"]
 
     query = from u in TartuSmarterBike.Accounts.User,
-                 where: u.email == ^gifting_user, select: u
+                 where: u.email == ^param["gifting_user_email"], select: u
     gifting_user = Repo.one(query)
     exp_date_map = %{"1-year membership" => 365, "1-week membership" => 7, "1-day membership" => 1, "1-hour membership" => 0 }
     gifting_membership = exp_date_map[param["subscription_type"]]
 
-    case gifting_user == nil do
+    user = TartuSmarterBike.Authentication.load_current_user(conn)
+
+    case gifting_user == nil || user.email == gifting_user do
       true ->
         conn
         |> put_flash(:info, "User doesn't exists")
@@ -187,16 +195,14 @@ defmodule TartuSmarterBikeWeb.PageController do
                 |> Repo.update
                 conn
                 |> put_flash(:info, "Success")
-                |> redirect(to: Routes.page_path(conn, :gifting_form))
-                # add money subtraction from sender
+                |> redirect(to: Routes.page_path(conn, :index))
               else
                 conn
-                |> put_flash(:info, "User already has a fresh membership")
+                |> put_flash(:info, "The user has a longer membership")
                 |> redirect(to: Routes.page_path(conn, :gifting_form))
               end
             else
               days = exp_date_map[param["subscription_type"]]
-              IO.inspect(gifting_user)
               if(Timex.after?(Timex.shift(Timex.today(), days: days), gifting_user.expiration_date)) do
                 User.changeset(gifting_user, %{})
                 |> Changeset.put_change(:subscription_type, param["subscription_type"])
@@ -204,11 +210,11 @@ defmodule TartuSmarterBikeWeb.PageController do
                 |> Repo.update
                 conn
                 |> put_flash(:info, "Success")
-                |> redirect(to: Routes.page_path(conn, :gifting_form))
+                |> redirect(to: Routes.page_path(conn, :index))
                 # add money subtraction from sender
               else
                 conn
-                |> put_flash(:info, "User already has a fresh membership")
+                |> put_flash(:info, "The user has a longer membership")
                 |> redirect(to: Routes.page_path(conn, :gifting_form))
               end
             end
@@ -220,7 +226,7 @@ defmodule TartuSmarterBikeWeb.PageController do
                   |> Repo.update
                   conn
                   |> put_flash(:info, "Success")
-                  |> redirect(to: Routes.page_path(conn, :gifting_form))
+                  |> redirect(to: Routes.page_path(conn, :index))
               else
                 days = exp_date_map[param["subscription_type"]]
                 User.changeset(gifting_user, %{})
@@ -229,10 +235,31 @@ defmodule TartuSmarterBikeWeb.PageController do
                 |> Repo.update
                 conn
                 |> put_flash(:info, "Success")
-                |> redirect(to: Routes.page_path(conn, :gifting_form))
+                |> redirect(to: Routes.page_path(conn, :index))
               end
           end
     end
+  end
+
+  def invoice(conn, _params) do
+    user = TartuSmarterBike.Authentication.load_current_user(conn)
+    membership_query =
+      from m in TartuSmarterBike.Services.Membership_Invoice,
+      where: m.user_id == ^user.id,
+      select: m
+
+    ride_query =
+      from r in TartuSmarterBike.Services.Ride_Invoice,
+      where: r.user_id == ^user.id,
+      select: r
+
+    membership_invoices = Repo.all(membership_query)
+    ride_invoices = Repo.all(ride_query)
+
+    IO.inspect(membership_invoices)
+    IO.inspect(ride_invoices)
+
+    render(conn, "invoice.html", membership_invoices: membership_invoices, ride_invoices: ride_invoices)
   end
 
 end

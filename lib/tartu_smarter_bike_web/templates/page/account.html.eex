@@ -5,30 +5,46 @@
     <tr>
         <th colspan="2"> Name </th>
         <th colspan="2"> Balance </th>
-        <th colspan="2"> Membership type </th>
-        <th colspan="2"> Membership ends </th>
+        <th colspan="2"> Membership status </th>
+        <th colspan="2"> Exipiration date </th>
+        <th colspan="2"> Total km ridden </th>
+        <th colspan="2"> Total saved co2 </th>
+        <th colspan="2"> Total calories burned </th>
     </tr>
     </thead>
     <tbody>
     <tr>
         <td colspan="2"><%= @user.name %></td>
         <td colspan="2"><%= @user.balance %></td>
-        <td colspan="2"><%= @user.subscription_type %></td>
-        <td colspan="2"><%= @user.name %></td>
+        <%= if @user.subscription_type == nil do%>
+          <td colspan="2"><%= "None" %></td>
+          <td colspan="2"><%= "Not available" %></td>
+        <% else %>
+          <td colspan="2"><%= @user.subscription_type %></td>
+          <td colspan="2"><%= @user.expiration_date %></td>
+        <% end %>
+        <th colspan="2"> <%= @total_distance %> </th>
+        <th colspan="2"> <%= @total_distance * 2 / 3 %> </th>
+        <th colspan="2"> <%= @total_distance / 100  %> </th>
+
 
     </tr>
 
-    <%= if TartuSmarterBike.Authentication.load_current_user(@conn).subscription_type do %>
-        <%= link "Charge with pre-paid card", to: Routes.page_path(@conn, :prepaid_form) %>
-        <br>
-        <%= link "Gift a membership", to: Routes.page_path(@conn, :gifting_form) %>
-    <% else %>
-        <%= link "Charge with pre-paid card", to: Routes.page_path(@conn, :prepaid_form) %>
-        <br>
+
+    <%= link "Charge with pre-paid card", to: Routes.page_path(@conn, :prepaid_form) %>
+    <br>
+
+    <%= if TartuSmarterBike.Authentication.load_current_user(@conn).subscription_type == nil do %>
         <%= link "Purchase membership", to: Routes.page_path(@conn, :membership_form) %>
+        <br>
     <% end %>
+
+    <%= link "Gift a membership", to: Routes.page_path(@conn, :gifting_form) %>
+    <br>
+    <%= link "Ride history", to: Routes.ride_path(@conn, :index) %>
+
+
+
 
     </tbody>
 </table>
-
-

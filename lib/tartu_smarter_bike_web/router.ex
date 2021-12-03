@@ -33,6 +33,7 @@ defmodule TartuSmarterBikeWeb.Router do
     pipe_through [:browser, :browser_auth]
     get "/", PageController, :index
     get "/account", PageController, :home
+    get "/invoice", PageController, :invoice
     get "/membership_form", PageController, :membership_form
     post "/membership", PageController, :membership
     get "/prepaid_form", PageController, :prepaid_form

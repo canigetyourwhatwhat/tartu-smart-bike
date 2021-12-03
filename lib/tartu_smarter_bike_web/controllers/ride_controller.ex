@@ -24,6 +24,11 @@ defmodule TartuSmarterBikeWeb.RideController do
   end
 
   def new(conn, _params) do
+    # Checking the time
+    working_hour(conn)
+    # If a user doesn't have a memberhsip
+    membership_is_valid(conn)
+
     changeset = Services.change_ride(%Ride{})
     render(conn, "new.html", changeset: changeset)
   end
@@ -125,111 +130,112 @@ defmodule TartuSmarterBikeWeb.RideController do
 
   def book(conn, %{"id" => dock_id}) do
     #json(conn, %{id: dock_id})
-    if (validate_membership_exp(conn)) do
     user = TartuSmarterBike.Authentication.load_current_user(conn)
+
+    # Checking the time
+    working_hour(conn)
+
     query2 = from r in Ride, where: r.status != "completed" and r.user_id  == ^user.id, select: r
     ride = Repo.one(query2)
 
-    if ride != nil do
-      json(conn, %{message: "You already booked a bike!", type: "error" })
-    else
-      queryx = from d in Dock_station, where: d.id  == ^dock_id, select: d
-      dock = List.first(Repo.all(queryx))
-      if dock.available_bikes != 0 do
-        query = from b in Bike, where: b.dock_station_id  == ^dock_id, select: b
-        booking_bike = List.first(Repo.all(query))
-
-        # Update the bike status
-        Bike.changeset(booking_bike, %{}, :update)
-        |> Changeset.put_change(:usage_status, "booked")
-        |> Repo.update
-
-        # Create Ride object
-        created_ride = create(conn, booking_bike.id_code)
-
-        # Update the Ride object
-        Ride.changeset(created_ride, %{})
-        |> Changeset.put_change(:status, "booked")
-        |> Repo.update
-
-        json(conn, %{message: "Booked the bike! Unlock #{booking_bike.id_code} to ride it.", type: "info" })
+    if (membership_is_valid(conn)) do
+      if ride != nil do
+        json(conn, %{message: "You already booked a bike!", type: "error" })
       else
-        json(conn, %{message: "The dock station is empty! Please book from another.", type: "error" })
+        query_dock = from d in Dock_station, where: d.id  == ^dock_id, select: d
+        dock = List.first(Repo.all(query_dock))
+        if dock.available_bikes != 0 do
+          query = from b in Bike, where: b.dock_station_id  == ^dock_id, select: b
+          booking_bike = List.first(Repo.all(query))
+
+          # Update the bike status
+          Bike.changeset(booking_bike, %{}, :update)
+          |> Changeset.put_change(:usage_status, "booked")
+          |> Repo.update
+
+          # Create Ride object
+          created_ride = create(conn, booking_bike.id_code)
+
+          # Update the Ride object
+          Ride.changeset(created_ride, %{})
+          |> Changeset.put_change(:status, "booked")
+          |> Repo.update
+
+          json(conn, %{message: "Booked the bike! Unlock #{booking_bike.id_code} to ride it.", type: "info" })
+        else
+          json(conn, %{message: "The dock station is empty! Please book from another.", type: "error" })
+        end
       end
-    end
+
     else
+      User.changeset(user, %{})
+      |> Changeset.put_change(:subscription_type, "Expired")
+      |> Repo.update
       json(conn, %{message: "You need to update your membership. Can't book now", type: "error" })
     end
   end
 
   def unlock(conn, %{"ride" => param}) do
 
-    if (validate_membership_exp(conn)) do
+    # Get the Ride and Bike objects
+    user = TartuSmarterBike.Authentication.load_current_user(conn)
+    query_ride = from r in Ride, where: r.user_id == ^user.id and r.status == "booked", select: r
+    ride = Repo.one(query_ride)
+    query = from b in Bike, where: b.id_code  == ^param["id_code"], select: b
+    bike = Repo.one(query)
 
-      # Get the Ride and Bike objects
-      user = TartuSmarterBike.Authentication.load_current_user(conn)
-      query_ride = from r in Ride, where: r.user_id == ^user.id and r.status == "booked", select: r
-      ride = Repo.one(query_ride)
-      query = from b in Bike, where: b.id_code  == ^param["id_code"], select: b
-      bike = Repo.one(query)
-
-      case ride == nil do
-        true -> # Unlock a Bike based on the id_code
-          # Validate the id_code
-          case bike == nil || bike.usage_status != "available" || bike.locking_status != "locked" do
-            true ->
-              conn
-              |> put_flash(:info, "Entered Bike ID is not valid")
-              |> render("new.html", changeset: Services.change_ride(%Ride{}))
-            false ->
-              # Update the bike status
-              Bike.changeset(bike, %{}, :update)
-              |> Changeset.put_change(:usage_status, "in-use")
-              |> Changeset.put_change(:locking_status, "unlocked")
-              |> Repo.update
-
-              #create Ride object
-              create(conn, param["id_code"])
-
-              # Send notification of unlocking
-              conn
-              |> put_flash(:info, "Unlocked the bike! Enjoy your ride :)")
-              |> redirect(to: Routes.page_path(conn, :index))
-          end
-
-        false -> # If there is a ride that has "booked" status
-
-          # Validate the booked bike is same as the type id_code
-          if bike.id != ride.bike_id do
+    case ride == nil do
+      true -> # Unlock a Bike based on the id_code
+        # Validate the id_code
+        case bike == nil || bike.usage_status != "available" || bike.locking_status != "locked" do
+          true ->
             conn
-            |> put_flash(:info, "Entered Bike ID differs from booked bike ID")
+            |> put_flash(:info, "Entered Bike ID is not valid")
             |> render("new.html", changeset: Services.change_ride(%Ride{}))
-          else
-
-            # Update bike status
-            query_bike = from r in Bike, where: r.id == ^ride.bike_id, select: r
-            booked_bike = Repo.one(query_bike)
-
-            Bike.changeset(booked_bike, %{}, :update)
+          false ->
+            # Update the bike status
+            Bike.changeset(bike, %{}, :update)
             |> Changeset.put_change(:usage_status, "in-use")
             |> Changeset.put_change(:locking_status, "unlocked")
             |> Repo.update
 
-            # Update ride status
-            Ride.changeset(ride, %{})
-            |> Changeset.put_change(:status, "on-going")
-            |> Repo.update
+            #create Ride object
+            create(conn, param["id_code"])
 
             # Send notification of unlocking
             conn
             |> put_flash(:info, "Unlocked the bike! Enjoy your ride :)")
             |> redirect(to: Routes.page_path(conn, :index))
-          end
+        end
+
+      false -> # If there is a ride that has "booked" status
+
+        # Validate the booked bike is same as the type id_code
+        if bike.id != ride.bike_id do
+          conn
+          |> put_flash(:info, "Entered Bike ID differs from booked bike ID")
+          |> render("new.html", changeset: Services.change_ride(%Ride{}))
+        else
+
+          # Update bike status
+          query_bike = from r in Bike, where: r.id == ^ride.bike_id, select: r
+          booked_bike = Repo.one(query_bike)
+
+          Bike.changeset(booked_bike, %{}, :update)
+          |> Changeset.put_change(:usage_status, "in-use")
+          |> Changeset.put_change(:locking_status, "unlocked")
+          |> Repo.update
+
+          # Update ride status
+          Ride.changeset(ride, %{})
+          |> Changeset.put_change(:status, "on-going")
+          |> Repo.update
+
+          # Send notification of unlocking
+          conn
+          |> put_flash(:info, "Unlocked the bike! Enjoy your ride :)")
+          |> redirect(to: Routes.page_path(conn, :index))
       end
-    else
-      conn
-      |> put_flash(:info, "You need to update your membership")
-      |> redirect(to: Routes.page_path(conn, :membership_form))
     end
   end
 
@@ -381,15 +387,29 @@ defmodule TartuSmarterBikeWeb.RideController do
   end
 
 
-  defp validate_membership_exp(conn) do
+  defp membership_is_valid(conn) do
     user = TartuSmarterBike.Authentication.load_current_user(conn)
     if (user.subscription_type == nil || Timex.after?(Timex.today(), user.expiration_date) ) do
-      false
-    else
-      true
+      # Update membership status of the user
+      user = TartuSmarterBike.Authentication.load_current_user(conn)
+      User.changeset(user, %{})
+      |> Changeset.put_change(:expiration_date, nil)
+      |> Changeset.put_change(:subscription_type, nil)
+      |> Repo.update
+
+      conn
+      |> put_flash(:info, "You need to update your membership")
+      |> redirect(to: Routes.page_path(conn, :membership_form))
     end
   end
 
-
+  defp working_hour(conn) do
+    {_, {hour, _, _}} = :calendar.local_time()
+    if 0 < hour and hour < 5 do
+      conn
+      |> put_flash(:info, "Service is not available during this time period")
+      |> redirect(to: Routes.page_path(conn, :index))
+    end
+  end
 
 end

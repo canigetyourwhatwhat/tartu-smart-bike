@@ -21,8 +21,7 @@
           <%= link "Home", to: Routes.page_path(@conn, :index) %>
           <%= link "Rankings", to: Routes.ride_path(@conn, :ranking) %>
           <%= if TartuSmarterBike.Authentication.load_current_user(@conn) do %>
-            <%= link "Map", to: Routes.page_path(@conn, :map) %>
-            <%= link "Ride history", to: Routes.ride_path(@conn, :index) %>
+            <%= link "Map", to: Routes.page_path(@conn, :map) %>            
           <% end %>
         </span>
         <span>

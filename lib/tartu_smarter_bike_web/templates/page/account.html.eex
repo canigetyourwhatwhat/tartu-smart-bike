@@ -42,6 +42,8 @@
     <%= link "Gift a membership", to: Routes.page_path(@conn, :gifting_form) %>
     <br>
     <%= link "Ride history", to: Routes.ride_path(@conn, :index) %>
+    <br>
+    <%= link "Invoice history", to: Routes.page_path(@conn, :invoice) %>
 
 
 

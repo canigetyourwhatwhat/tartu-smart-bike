@@ -1,22 +1,26 @@
-<h1>Account information</h1>
+<h1>Invoice History</h1>
 
 <table>
-    <thead>
+  <thead>
     <tr>
-        <th colspan="2"> Invoice type </th>
-        <th colspan="2"> Amount </th>
-        <th colspan="2"> Check the ride </th>
-        <th colspan="2"> Membership ends </th>
+      <th > Invoice type </th>
+      <th > Amount </th>
+      <th > Created Datetime </th>
     </tr>
-    </thead>
-    <tbody>
-    <tr id="ranking-table-tr">
-        <td colspan="2"><%= @user.name %></td>
-        <td colspan="2"><%= @user.balance %></td>
-        <td colspan="2"><%= @user.subscription_type %></td>
-        <td colspan="2"><%= @user.name %></td>
+  </thead>
 
-    </tr>
+  <tbody>
+    <%= for invoice <- @invoices do %>
+      <tr>
+        <%= if invoice.membership == nil do %>
+          <td> Invoice from riding a bike </td>
+        <% else %>
+          <td><%= invoice.membership %> </td>
+        <% end %>
+        <td><%= invoice.amount %></td>
+        <td><%= String.replace(invoice.inserted_at |> to_string, "T", " " ) %></td>
+      </tr>
+    <% end %>
 
-    </tbody>
+  </tbody>
 </table>

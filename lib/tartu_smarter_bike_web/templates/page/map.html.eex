@@ -63,6 +63,9 @@
         let search_layer = new Microsoft.Maps.Layer(); // create new layer
         let suggestion_layer = new Microsoft.Maps.Layer(); // create new layer
 
+        let total_docks_number_p = document.createElement("p");
+        var alert_box = document.querySelector("#alert-placeholder") // to total docks
+
         var map = new Microsoft.Maps.Map('#myMap', {
             credentials: "Ao5Ei0wW9iFqCzTqgDBkdC9rjrgv1e2XIU3-IMfGmjJR01UbWIFS-BMPtTUNQq0a",
             center: new Microsoft.Maps.Location(58.3787425, 26.7308478)
@@ -79,6 +82,8 @@
 
         let station_list = []
         let bike_list = []
+
+        var station_list_count = station_list.length
 
         <%= for bike <- @bikes do %>
         bike_list.push({
@@ -104,8 +109,6 @@
             })
         <% end %>
 
-
-
         station_list.forEach(station =>{
 
             let pin = create_pin_for_layer(station)
@@ -116,6 +119,9 @@
             map.layers.insert(suggestion_layer)
 
         })
+
+        total_docks_number_p.innerText = `Total number of docks: ${station_list.length}`
+        alert_box.append(total_docks_number_p)
 
         // Autosuggest thing
         Microsoft.Maps.loadModule('Microsoft.Maps.AutoSuggest', function () {
@@ -128,6 +134,7 @@
             manager.attachAutosuggest('#map-search-box', '#searchBoxContainer', selectedSuggestion);
         });
 
+        let rnd = 0
         // Select suggestion
         function selectedSuggestion(suggestionResult) {
             map.entities.clear();
@@ -139,7 +146,10 @@
 
         // Distance calculator
         function calculateClosestDockstations(lat, lon) {
-            suggestion_layer.clear()
+
+            let ugly_counter = 0;
+
+            suggestion_layer.clear();
 
             for(let i = 0; i < map.layers.length; i++) {
                 map.layers[i.toString()].setVisible(false);
@@ -152,18 +162,25 @@
                     let dis = Microsoft.Maps.SpatialMath.getDistanceTo(dock_loc, add_loc, Microsoft.Maps.SpatialMath.DistanceUnits.Kilometers);
 
                     if (dis < 0.5){
+                        ugly_counter++;
+                        window.localStorage.setItem("radius_dock_counter", ugly_counter.toString());
                         // logic of pushing the station as a pin to layer
-                        console.log(`${station.address} -> ${dis}`)
-                        let pin = create_pin_for_layer(station)
+                        let pin = create_pin_for_layer(station);
                         suggestion_layer.add(pin);
                     }
                 });
-            })
-            infobox.setOptions({visible: false}) // Hide infoboxes
+            });
+
+
+            infobox.setOptions({visible: false}); // Hide infoboxes
             //map.layers.insert(suggestion_layer);
             suggestion_layer.setVisible(true);
 
+            alert_box.children[0].remove();
+            total_docks_number_p.innerText = `Total number of docks: ${window.localStorage.getItem("radius_dock_counter")}`;
+            alert_box.append(total_docks_number_p);
         }
+
 
         /*
         function search_box_change(e){
@@ -178,13 +195,21 @@
         function find_dock(e){
             // hide current layers
             map.entities.clear();
-            search_layer.clear()
+            search_layer.clear();
+
+            let total_docks_number_find = 0;
+
 
             if(e.target.value === ""){
                 for(let i = 0; i < map.layers.length; i++) {
                     map.layers[i.toString()].setVisible(false);
                 }
                 main_layer.setVisible(true);
+
+                alert_box.children[0].remove();
+                total_docks_number_p.innerText = `Total number of docks: ${station_list.length}`
+                alert_box.append(total_docks_number_p)
+
             }else{
                 for(let i = 0; i < map.layers.length; i++) {
                     map.layers[i.toString()].setVisible(false);
@@ -195,15 +220,19 @@
                     if(station.address.toLowerCase().startsWith(e.target.value.toLowerCase())){
                         let pin = create_pin_for_layer(station)
                         search_layer.add(pin);
+                        total_docks_number_find++;
                     }
                 })
+
+                alert_box.children[0].remove();
+                total_docks_number_p.innerText = `Total number of docks: ${total_docks_number_find}`
+                alert_box.append(total_docks_number_p)
             }
 
             infobox.setOptions({visible: false}) // Hide infoboxes
             search_layer.setVisible(true); // HIDE MAIN LAYER
             //map.layers.insert(search_layer); // insert search layer
         }
-
 
         function create_pin_for_layer(station){
             var loc = new Microsoft.Maps.Location(station.longitude, station.latitude);

@@ -14,7 +14,7 @@ defmodule TartuSmarterBike.Services.Ride_Invoice do
   @doc false
   def changeset(ride__invoice, attrs) do
     ride__invoice
-    |> cast(attrs, [:amount])
-    |> validate_required([:amount])
+    |> cast(attrs, [:amount, :user_id, :ride_id])
+    |> validate_required([])
   end
 end

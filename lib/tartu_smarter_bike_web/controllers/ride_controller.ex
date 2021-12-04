@@ -6,7 +6,7 @@ defmodule TartuSmarterBikeWeb.RideController do
 
   alias TartuSmarterBike.Services
   alias TartuSmarterBike.Repo
-  alias TartuSmarterBike.Services.{Ride, Dock_station, Report}
+  alias TartuSmarterBike.Services.{Ride, Dock_station, Report, Ride_Invoice}
   alias TartuSmarterBike.Accounts.Bike
   alias TartuSmarterBike.Accounts.User
 
@@ -282,7 +282,7 @@ defmodule TartuSmarterBikeWeb.RideController do
     departure_dock = Repo.one(dep_query)
 
 
-    ## distance magic
+    # distance magic
     new_distance = if departure_dock.address == arrived_dock.address do
       Enum.random(1_000..9_999)
     else
@@ -294,11 +294,21 @@ defmodule TartuSmarterBikeWeb.RideController do
       )
     end
 
-
+    # Check riding time and cost
+    duration = Timex.diff(DateTime.utc_now, created_ride.inserted_at, :hour)
+    cost =
+      cond do
+        duration < 1 -> 0
+        not created_ride.reported and 5 <= duration and duration < 24 -> 80
+        created_ride.reported and 5 <= duration and duration < 24 -> duration
+        24 <= duration -> 2500
+        true -> duration
+      end
 
     # Update the status of Bike.
     # If the bike was reported, it remains off-duty status
-    if riding_bike.usage_status == "due-off" do
+    # If it was ridden more than 5 hours and not reported
+    if riding_bike.usage_status == "due-off" or (5 < duration and not created_ride.reported) do
       changeset = Bike.changeset(riding_bike, %{}, :update)
                   |> Changeset.put_change(:locking_status, "locked")
                   |> Changeset.put_change(:usage_status, "due-off")
@@ -312,22 +322,16 @@ defmodule TartuSmarterBikeWeb.RideController do
       Repo.update!(changeset)
     end
 
-    # Create Invoice object based on the riding time
-    duration = Timex.diff(DateTime.utc_now, created_ride.inserted_at, :hour)
-    cost =
-      cond do
-        duration < 1 -> 0
-        not created_ride.reported and 5 <= duration and duration < 24 -> 80
-        created_ride.reported and 5 <= duration and duration < 24 -> duration
-        24 <= duration -> 2500
-        true -> duration
-      end
+    IO.inspect(cost)
 
-    if 5 < duration and not created_ride.reported do
-      Bike.changeset(riding_bike, %{})
-      |> Changeset.put_change(:usage_status, "due-off")
-      |> Repo.update
-    end
+    # Create a ride_invoice object
+    item = Ride_Invoice.changeset(%Ride_Invoice{}, %{})
+    |> Changeset.put_change(:amount, cost)
+    |> Changeset.put_change(:user_id, user.id)
+    |> Changeset.put_change(:ride_id, created_ride.id)
+    |> Repo.insert
+
+    IO.inspect(item)
 
     # Update the Ride object
     {_, new_created_ride} =
@@ -389,7 +393,21 @@ defmodule TartuSmarterBikeWeb.RideController do
 
   defp membership_is_valid(conn) do
     user = TartuSmarterBike.Authentication.load_current_user(conn)
-    if (user.subscription_type == nil || Timex.after?(Timex.today(), user.expiration_date) ) do
+
+    if(user.subscription_type == nil) do
+      # Update membership status of the user
+      user = TartuSmarterBike.Authentication.load_current_user(conn)
+      User.changeset(user, %{})
+      |> Changeset.put_change(:expiration_date, nil)
+      |> Changeset.put_change(:subscription_type, nil)
+      |> Repo.update
+
+      conn
+      |> put_flash(:info, "You need to update your membership")
+      |> redirect(to: Routes.page_path(conn, :membership_form))
+    end
+
+    if(Timex.after?(Timex.today(), user.expiration_date) ) do
       # Update membership status of the user
       user = TartuSmarterBike.Authentication.load_current_user(conn)
       User.changeset(user, %{})

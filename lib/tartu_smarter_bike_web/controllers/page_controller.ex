@@ -1,7 +1,7 @@
 defmodule TartuSmarterBikeWeb.PageController do
   use TartuSmarterBikeWeb, :controller
 
-  import Ecto.Query, only: [from: 2]
+  import Ecto.Query
   alias TartuSmarterBike.Accounts.{Bike, User}
   alias TartuSmarterBike.Services.{Ride, Membership_Invoice, Prepaid_Card}
   alias TartuSmarterBike.Repo
@@ -247,14 +247,16 @@ defmodule TartuSmarterBikeWeb.PageController do
     membership_query =
       from m in TartuSmarterBike.Services.Membership_Invoice,
       where: m.user_id == ^user.id,
-      select: {m.amount, m.inserted_at, m.updated_at, m.user_id, nil, m.membership}
+      select: %{amount: m.amount,inserted_at: m.inserted_at, updated_at: m.updated_at, user_id: m.user_id, ride_id: nil, membership: m.membership}
 
     ride_query =
       from r in TartuSmarterBike.Services.Ride_Invoice,
       where: r.user_id == ^user.id,
-      select: {r.amount, r.inserted_at, r.updated_at, r.user_id, r.ride_id, nil}, union: ^membership_query, order_by: [desc: r.updated_at]
+      select: %{amount: r.amount, inserted_at: r.inserted_at, updated_at: r.updated_at, user_id: r.user_id, ride_id: r.ride_id, membership: nil}
 
-    ride_invoices = Repo.all(ride_query)
+
+    union_query = union_all(membership_query, ^ride_query)
+    ride_invoices = from(u in subquery(union_query), select: %{amount: u.amount, inserted_at: u.inserted_at, updated_at: u.updated_at, user_id: u.user_id, membership: u.membership, ride_id: u.ride_id}, order_by: [desc: u.updated_at]) |> Repo.all()
 
     IO.inspect(ride_invoices)
 

@@ -78,6 +78,18 @@
         infobox.setMap(map);
 
         let station_list = []
+        let bike_list = []
+
+        <%= for bike <- @bikes do %>
+        bike_list.push({
+            id: "<%= bike.id %>",
+            id_code: "<%= bike.id_code %>",
+            usage_status: "<%= bike.usage_status %>",
+            locking_status: "<%= bike.locking_status %>",
+            type: "<%= bike.type %>",
+            dock_station_id: "<%= bike.dock_station_id %>"
+        })
+        <% end %>
 
         <%= for station <- @stations do %>
             station_list.push({
@@ -86,9 +98,13 @@
                 latitude: "<%= station.latitude %>",
                 longitude: "<%= station.longitude %>",
                 available_bikes: "<%= station.available_bikes %>",
-                capacity: "<%= station.capacity %>"
+                capacity: "<%= station.capacity %>",
+                e_bikes_count: bike_list.filter(item=>item.type === 'electric' && item.dock_station_id === "<%= station.id %>" ).length,
+                normal_bikes_count: bike_list.filter(item=>item.type === 'normal' && item.dock_station_id === "<%= station.id %>" ).length,
             })
         <% end %>
+
+
 
         station_list.forEach(station =>{
 
@@ -194,11 +210,11 @@
             var pin = new Microsoft.Maps.Pushpin(loc);
             pin.metadata = {
                 title: station.address,
-                description: `Capacity: ${station.capacity} </br>Available bikes: ${station.available_bikes}`
+                description: `Capacity: ${station.capacity}</br>Available bikes: ${station.available_bikes}</br>E-bikes: ${station.e_bikes_count}</br>Normal bikes: ${station.normal_bikes_count}`
             };
 
             Microsoft.Maps.Events.addHandler(pin, 'click', (e)=>{
-                pushpinClicked(e, infobox, station.address, station.capacity, station.available_bikes, station.id)
+                pushpinClicked(e, infobox, station.address, station.capacity, station.available_bikes, station.id, station.e_bikes_count, station.normal_bikes_count)
             });
             return pin
         }
@@ -211,7 +227,7 @@
 
 
 
-    function pushpinClicked(e, infobox, title, capacity, available_bikes, id) {
+    function pushpinClicked(e, infobox, title, capacity, available_bikes, id, e_bikes_count, normal_bikes_count) {
         //Make sure the infobox has metadata to display.
         if (e.target.metadata) {
 
@@ -219,9 +235,9 @@
             infobox.setOptions({
                 location: e.target.getLocation(),
                 title: title,
-                description: `<p>Available: ${available_bikes}<br>Capacity: ${capacity}</p>`,
+                description: `<p>Available: ${available_bikes}<br>Capacity: ${capacity}<br>E-bikes: ${e_bikes_count}<br>Normal bikes: ${normal_bikes_count}</p>`,
                 visible: true,
-                htmlContent: `<div class="customInfobox"><div class="title">${title}</div><p>Available: ${available_bikes}<br>Capacity: ${capacity}</p><button type="button" id="map_button" onclick="ajax_create_booking('${id}')">Book a bike</button></div>`
+                htmlContent: `<div class="customInfobox"><div class="title">${title}</div><p>Available: ${available_bikes}<br>Capacity: ${capacity}<br>E-bikes: ${e_bikes_count}<br>Normal bikes: ${normal_bikes_count}</p><button type="button" id="map_button" onclick="ajax_create_booking('${id}')">Book a bike</button></div>`
             });
         }
     }

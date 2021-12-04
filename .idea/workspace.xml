@@ -3,7 +3,7 @@
   <component name="ChangeListManager">
     <list default="true" id="70e2282f-654e-45ec-87bc-f54b7bb1d233" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/tartu_smarter_bike_web/controllers/page_controller.ex" beforeDir="false" afterPath="$PROJECT_DIR$/lib/tartu_smarter_bike_web/controllers/page_controller.ex" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/tartu_smarter_bike_web/templates/page/map.html.eex" beforeDir="false" afterPath="$PROJECT_DIR$/lib/tartu_smarter_bike_web/templates/page/map.html.eex" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -38,7 +38,7 @@
       <workItem from="1638464026990" duration="9705000" />
       <workItem from="1638535985542" duration="18347000" />
       <workItem from="1638558707264" duration="68000" />
-      <workItem from="1638618728043" duration="10184000" />
+      <workItem from="1638618728043" duration="13116000" />
     </task>
     <servers />
   </component>

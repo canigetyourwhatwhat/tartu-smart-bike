@@ -95,24 +95,27 @@ defmodule TartuSmarterBikeWeb.PageController do
   end
 
   def membership(conn, %{"membership__invoice" => param}) do
-    exp_date_map = %{"1-year membership" => 365, "1-week membership" => 7, "1-day membership" => 1, "1-hour membership" => 0 }
-    cost =
-      case param["subscription_type"] do
-        "1-year membership" -> 30
-        "1-week membership" -> 10
-        "1-day membership"  -> 5
-        "1-hour membership" -> 2
-      end
-
-
     user = TartuSmarterBike.Authentication.load_current_user(conn)
+    exp_date_map = %{"1-year membership" => 365, "1-week membership" => 7, "1-day membership" => 1, "1-hour membership" => 0 }
+    cost_map = %{"1-year membership" => 30, "1-week membership" => 10, "1-day membership" => 5, "1-hour membership" => 2 }
+    cost = cost_map[param["subscription_type"]]
+
+    # Update user's balance
+    User.changeset(user, %{})
+    |> Changeset.put_change(:subscription_type, param["subscription_type"])
+    |> Repo.update
+
+    # Create membership_invoice object
+    Membership_Invoice.changeset(%Membership_Invoice{}, %{amount: cost})
+    |> Changeset.put_change(:user_id, user.id)
+    |> Changeset.put_change(:membership, param["subscription_type"])
+    |> Repo.insert
+
 
     # if user has enough money on balance
-
     if(user.balance >= cost) do
       User.changeset(user, %{})
       |> Changeset.put_change(:balance, user.balance - cost)
-      |> Changeset.put_change(:subscription_type, param["subscription_type"])
       |> Repo.update
 
       if(exp_date_map[param["subscription_type"]] == 0) do
@@ -127,22 +130,12 @@ defmodule TartuSmarterBikeWeb.PageController do
         |> Changeset.put_change(:expiration_date, exp_date)
         |> Repo.update
       end
+      conn
+      |> put_flash(:info, "We subtracted #{cost} Euros from your balance")
+      |> redirect(to: Routes.page_path(conn, :home))
 
-      Membership_Invoice.changeset(%Membership_Invoice{}, %{amount: cost})
-      |> Changeset.put_change(:user_id, user.id)
-      |> Changeset.put_change(:membership, param["subscription_type"])
-      |> Repo.insert
-      redirect(conn, to: Routes.page_path(conn, :home))
-    else # imitate the subtraction from the credit card
-      Membership_Invoice.changeset(%Membership_Invoice{}, %{amount: cost})
-      |> Changeset.put_change(:user_id, user.id)
-      |> Changeset.put_change(:membership, param["subscription_type"])
-      |> Repo.insert
-
-      User.changeset(user, %{})
-      |> Changeset.put_change(:subscription_type, param["subscription_type"])
-      |> Repo.update
-
+    # Retrieve money from credit card
+    else
       if(exp_date_map[param["subscription_type"]] == 0) do
         exp_date = Timex.shift(Timex.now(), hours: 1) |> DateTime.truncate(:second)
         User.changeset(user, %{})
@@ -157,7 +150,7 @@ defmodule TartuSmarterBikeWeb.PageController do
       end
 
       conn
-      |> put_flash(:info, "You don't have enough balance. We subtracted #{cost} euros from your credit card")
+      |> put_flash(:info, "You don't have enough balance. We subtracted #{cost} Euros from your credit card")
       |> redirect(to: Routes.page_path(conn, :home))
     end
 
@@ -172,14 +165,12 @@ defmodule TartuSmarterBikeWeb.PageController do
   end
 
   def gifting(conn, %{"user" => param}) do
-
+    user = TartuSmarterBike.Authentication.load_current_user(conn)
     query = from u in TartuSmarterBike.Accounts.User,
                  where: u.email == ^param["gifting_user_email"], select: u
     gifting_user = Repo.one(query)
     exp_date_map = %{"1-year membership" => 365, "1-week membership" => 7, "1-day membership" => 1, "1-hour membership" => 0 }
     gifting_membership = exp_date_map[param["subscription_type"]]
-
-    user = TartuSmarterBike.Authentication.load_current_user(conn)
 
     case gifting_user == nil || user.email == gifting_user do
       true ->
@@ -194,6 +185,9 @@ defmodule TartuSmarterBikeWeb.PageController do
                 |> Changeset.put_change(:subscription_type, param["subscription_type"])
                 |> Changeset.put_change(:expiration_date, Timex.shift(DateTime.utc_now(), hours: 1)|> DateTime.truncate(:second))
                 |> Repo.update
+
+                create_membership_invoice(conn, param)
+
                 conn
                 |> put_flash(:info, "Success")
                 |> redirect(to: Routes.page_path(conn, :index))
@@ -209,6 +203,9 @@ defmodule TartuSmarterBikeWeb.PageController do
                 |> Changeset.put_change(:subscription_type, param["subscription_type"])
                 |> Changeset.put_change(:expiration_date,  Timex.shift(DateTime.utc_now(), days: days)|> DateTime.truncate(:second))
                 |> Repo.update
+
+                create_membership_invoice(conn, param)
+
                 conn
                 |> put_flash(:info, "Success")
                 |> redirect(to: Routes.page_path(conn, :index))
@@ -225,21 +222,32 @@ defmodule TartuSmarterBikeWeb.PageController do
                   |> Changeset.put_change(:subscription_type, param["subscription_type"])
                   |> Changeset.put_change(:expiration_date, Timex.shift(DateTime.utc_now(), hours: 1)|> DateTime.truncate(:second))
                   |> Repo.update
-                  conn
-                  |> put_flash(:info, "Success")
-                  |> redirect(to: Routes.page_path(conn, :index))
               else
                 days = exp_date_map[param["subscription_type"]]
                 User.changeset(gifting_user, %{})
                 |> Changeset.put_change(:subscription_type, param["subscription_type"])
                 |> Changeset.put_change(:expiration_date, Timex.shift(DateTime.utc_now(), days: days)|> DateTime.truncate(:second))
                 |> Repo.update
-                conn
-                |> put_flash(:info, "Success")
-                |> redirect(to: Routes.page_path(conn, :index))
+
               end
+              create_membership_invoice(conn, param)
+
+              conn
+              |> put_flash(:info, "Success")
+              |> redirect(to: Routes.page_path(conn, :index))
           end
     end
+  end
+
+  defp create_membership_invoice(conn, %{"gifting_user_email" => _, "subscription_type" => type}) do
+    user = TartuSmarterBike.Authentication.load_current_user(conn)
+    cost_map = %{"1-year membership" => 30, "1-week membership" => 10, "1-day membership" => 5, "1-hour membership" => 2 }
+    cost = cost_map[type]
+
+    Membership_Invoice.changeset(%Membership_Invoice{}, %{amount: cost})
+    |> Changeset.put_change(:user_id, user.id)
+    |> Changeset.put_change(:membership, type)
+    |> Repo.insert
   end
 
   def invoice(conn, _params) do

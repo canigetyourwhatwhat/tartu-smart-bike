@@ -32,7 +32,7 @@ section nav a {
 
 /* Make container class of a normal width and center it */
 .container{
-  width: 1000px !important;
+  width: 1200px !important;
   align-self: center;
 }
 

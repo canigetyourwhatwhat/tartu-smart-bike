@@ -5,15 +5,29 @@
 </p>
 
 <p>
-  Started from <strong><%= @ride.departure %></strong> at <strong><%= @ride.inserted_at %></strong>
+  Started from <strong><%= @ride.departure %></strong> at <strong><%= String.replace(@ride.inserted_at |> to_string, "T", " " )%></strong>
 </p>
 
 <p>
-  Finished at <strong><%= @ride.destination %></strong> at <strong><%= @ride.updated_at %></strong>
+  Finished at <strong><%= @ride.destination %></strong> at <strong><%= String.replace(@ride.updated_at |> to_string, "T", " " )%></strong>
 </p>
 
 <p>
-  Duration: <strong><%= Timex.diff(DateTime.utc_now, @ride.inserted_at, :hour) %></strong> 
+  Duration:
+  <strong>
+    <%= if Timex.diff(DateTime.utc_now, @ride.inserted_at, :seconds) < 60 do %>
+    <%= Timex.diff(DateTime.utc_now, @ride.inserted_at, :seconds) %> seconds
+    <%= if Timex.diff(DateTime.utc_now, @ride.inserted_at, :minutes) >= 1 do %>
+    <%= Timex.diff(DateTime.utc_now, @ride.inserted_at, :minutes) %> minutes
+    <% end %>
+    <% end %>
+
+
+
+    <%= if Timex.diff(DateTime.utc_now, @ride.inserted_at, :hours) >=1 do %>
+     <%= Timex.diff(DateTime.utc_now, @ride.inserted_at, :hours) %> hours
+    <% end %>
+  </strong>
 </p>
 
 <p>

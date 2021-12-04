@@ -21,7 +21,7 @@
           <td colspan="2"><%= "Not available" %></td>
         <% else %>
           <td colspan="2"><%= @user.subscription_type %></td>
-          <td colspan="2"><%= @user.expiration_date %></td>
+          <td colspan="2">  <%= String.replace(@user.expiration_date |> to_string, "T", " " ) |> String.replace("Z", " ")  %></td>
         <% end %>
         <th colspan="2"> <%= @total_distance / 1000 %> </th>
         <th colspan="2"> <%= Decimal.round(Decimal.from_float((@total_distance/10)*3), 2) %></th>

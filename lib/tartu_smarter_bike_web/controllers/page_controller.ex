@@ -247,20 +247,18 @@ defmodule TartuSmarterBikeWeb.PageController do
     membership_query =
       from m in TartuSmarterBike.Services.Membership_Invoice,
       where: m.user_id == ^user.id,
-      select: m
+      select: {m.amount, m.inserted_at, m.updated_at, m.user_id, nil, m.membership}
 
     ride_query =
       from r in TartuSmarterBike.Services.Ride_Invoice,
       where: r.user_id == ^user.id,
-      select: r
+      select: {r.amount, r.inserted_at, r.updated_at, r.user_id, r.ride_id, nil}, union: ^membership_query, order_by: [desc: r.updated_at]
 
-    membership_invoices = Repo.all(membership_query)
     ride_invoices = Repo.all(ride_query)
 
-    IO.inspect(membership_invoices)
     IO.inspect(ride_invoices)
 
-    render(conn, "invoice.html", membership_invoices: membership_invoices, ride_invoices: ride_invoices)
+    #render(conn, "invoice.html", membership_invoices: membership_invoices, ride_invoices: ride_invoices)
   end
 
 end

@@ -6,9 +6,9 @@
         <th colspan="2"> Name </th>
         <th colspan="2"> Balance </th>
         <th colspan="2"> Membership status </th>
-        <th colspan="2"> Exipiration date </th>
+        <th colspan="2"> Expiration date </th>
         <th colspan="2"> Total km ridden </th>
-        <th colspan="2"> Total saved co2 </th>
+        <th colspan="2"> Total saved CO2 </th>
         <th colspan="2"> Total calories burned </th>
     </tr>
     </thead>
@@ -23,9 +23,9 @@
           <td colspan="2"><%= @user.subscription_type %></td>
           <td colspan="2"><%= @user.expiration_date %></td>
         <% end %>
-        <th colspan="2"> <%= @total_distance %> </th>
-        <th colspan="2"> <%= @total_distance * 2 / 3 %> </th>
-        <th colspan="2"> <%= @total_distance / 100  %> </th>
+        <th colspan="2"> <%= @total_distance / 1000 %> </th>
+        <th colspan="2"> <%= Decimal.round(Decimal.from_float((@total_distance/10)*3), 2) %></th>
+        <th colspan="2"> <%= Decimal.round(Decimal.from_float((@total_distance / 1000) * 60), 2)  %> </th>
 
 
     </tr>

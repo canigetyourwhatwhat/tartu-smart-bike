@@ -33,13 +33,14 @@ defmodule TartuSmarterBikeWeb.PageController do
   def home(conn, _params) do
     user = TartuSmarterBike.Authentication.load_current_user(conn)
     query = from r in Ride, where: r.user_id == ^user.id, select: sum(r.distance)
-    total_distance = Repo.all(query)
-    if Repo.one(query) == nil do
+    total_distance = Repo.one(query)
+    #IO.inspect(total_distance)
+
+    if total_distance == nil do
       render(conn, "account.html", user: user, total_distance: 0)
     else
       render(conn, "account.html", user: user, total_distance: total_distance)
     end
-
   end
 
 

@@ -266,7 +266,7 @@ defmodule TartuSmarterBikeWeb.PageController do
     union_query = union_all(membership_query, ^ride_query)
     invoices = from(u in subquery(union_query), select: %{amount: u.amount, inserted_at: u.inserted_at, updated_at: u.updated_at, user_id: u.user_id, membership: u.membership, ride_id: u.ride_id}, order_by: [desc: u.updated_at]) |> Repo.all()
 
-    render(conn, "invoice.html", invoices: invoices)
+    render(conn, "Invoice.html", invoices: invoices)
   end
 
 end

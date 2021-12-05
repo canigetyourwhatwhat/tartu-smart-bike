@@ -1,18 +1,72 @@
 <section>
-  <nav>
-    <%= if TartuSmarterBike.Authentication.load_current_user(@conn) do %>
-      <%= if @ride do %>
-        <%= if @ride.status == "booked" do %>
-          <%= @bike.id_code %>
-          <%= link "Unlock the bike", to: Routes.ride_path(@conn, :new) %>
-        <% else %>
-          <%= link "Lock the bike", to: Routes.ride_path(@conn, :arrived_form) %>
-        <% end %>
-      <% else %>
-          <%= link "Unlock the bike", to: Routes.ride_path(@conn, :new) %>
-      <% end %>
 
-     <%= link "Report an issue ", to: Routes.ride_path(@conn, :report_form) %>
-    <% end %>
-  </nav>
+    <nav>
+        <%= if TartuSmarterBike.Authentication.load_current_user(@conn) do %>
+        <%= if @ride do %>
+        <%= if @ride.status == "booked" do %>
+        <%= @bike.id_code %>
+        <%= link "Unlock the bike", to: Routes.ride_path(@conn, :new) %>
+        <% else %>
+        <%= link "Lock the bike", to: Routes.ride_path(@conn, :arrived_form) %>
+        <% end %>
+        <% else %>
+        <%= link "Unlock the bike", to: Routes.ride_path(@conn, :new) %>
+        <% end %>
+
+        <%= link "Report an issue ", to: Routes.ride_path(@conn, :report_form) %>
+
+        <% else %>
+
+            <div class="welcome-page-title my-container">
+                <div class="welcome-page-main-animation">
+                    <h2 class="welcome-page-header">
+                        Welcome To Our Bike App!
+                    </h2>
+
+                    <div class="bike-riding">
+                        <div class="clouds"></div>
+                        <div class="shadow"></div>
+                        <div class="cyclist">
+                            <div class="bike">
+                                <div class="leftTyre">
+                                    <div class="spokes"></div>
+                                </div>
+                                <div class="rightTyre">
+                                    <div class="spokes"></div>
+                                </div>
+                                <div class="wheel"></div>
+                                <div class="pedals"></div>
+                                <div class="chain"></div>
+                            </div>
+                            <div class="girl">
+                                <div class="top"></div>
+                                <div class="rightArm"></div>
+                                <div class="leftArm"></div>
+                                <div class="head"></div>
+                                <div class="hair"></div>
+                                <div class="strap"></div>
+                                <div class="trousers">
+                                    <div class="leftLeg">
+                                        <div class="leftcalf"></div>
+                                    </div>
+                                    <div class="rightLeg">
+                                        <div class="calf"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+
+
+
+
+        <% end %>
+    </nav>
+
+
 </section>

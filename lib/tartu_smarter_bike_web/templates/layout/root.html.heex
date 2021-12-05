@@ -28,6 +28,7 @@
           <%= if TartuSmarterBike.Authentication.load_current_user(@conn) do %>
             <%= link "Account settings", to: Routes.page_path(@conn, :home) %>
             <%= link "Log out", to: Routes.session_path(@conn, :delete, TartuSmarterBike.Authentication.load_current_user(@conn)), method: "delete", id: "logout" %>
+            <a href="JavaScript:Void(0);">Hey, <%= TartuSmarterBike.Authentication.load_current_user(@conn).name %></a>
           <% else %>
             <%= link "Log in", to: Routes.session_path(@conn, :new) %>
             <%= link "Register", to: Routes.user_path(@conn, :new), id: "register_button" %>

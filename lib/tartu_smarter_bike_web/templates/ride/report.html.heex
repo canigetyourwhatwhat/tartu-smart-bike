@@ -1,38 +1,41 @@
-<%= form_for @changeset, Routes.ride_path(@conn, :report), fn f -> %>
-  <h1>Report an issue</h1>
-  <%= if @changeset.action do %>
-    <div class="alert alert-danger">
-      <p>Oops, something went wrong! Please check the errors below.</p>
-    </div>
-  <% end %>
+<div style="margin-left: 30%;">
 
-  <%= if @ride do %>
+    <%= form_for @changeset, Routes.ride_path(@conn, :report), fn f -> %>
+    <h1>Report an issue</h1>
+    <%= if @changeset.action do %>
+    <div class="alert alert-danger">
+        <p>Oops, something went wrong! Please check the errors below.</p>
+    </div>
+    <% end %>
+
+    <%= if @ride do %>
     <%= hidden_input f,:id_code, value: @ride.bike_id %>
     <%= error_tag f, :id_code %>
-  <% else %>
+    <% else %>
     <p>
-      <%= label f, :id_code, "Bike ID" %>
-      <br>
-      <%= text_input f, :id_code %>
-      <%= error_tag f, :id_code %>
+        <%= label f, :id_code, "Bike ID" %>
+        <br>
+        <%= text_input f, :id_code %>
+        <%= error_tag f, :id_code %>
     </p>
-  <% end %>
+    <% end %>
 
-  <p>
-    <%= label f, :title %>
-    <br>
-    <%= text_input f, :title, id: "title" %>
-    <%= error_tag f, :title %>
-  </p>
+    <p>
+        <%= label f, :title %>
+        <br>
+        <%= text_input f, :title, id: "title" %>
+        <%= error_tag f, :title %>
+    </p>
 
-  <p>
-    <%= label f, :description %>
-    <br>
-    <%= textarea f, :description, id: "description" %>
-    <%= error_tag f, :description %>
-  </p>
+    <p>
+        <%= label f, :description %>
+        <br>
+        <%= textarea f, :description, id: "description" %>
+        <%= error_tag f, :description %>
+    </p>
 
-  <div>
-      <%= submit "Report", id: "submit_register" %>
-  </div>
-<% end %>
+    <div>
+        <%= submit "Report", id: "submit_register" %>
+    </div>
+    <% end %>
+</div>

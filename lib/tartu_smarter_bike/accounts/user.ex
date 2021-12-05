@@ -25,7 +25,7 @@ defmodule TartuSmarterBike.Accounts.User do
   @doc false
   def changeset(user, attrs) do
     user
-    |> cast(attrs, [:name, :birthdate, :email, :password, :balance, :card_number, :subscription_type])
+    |> cast(attrs, [:id, :name, :birthdate, :email, :password, :balance, :card_number, :subscription_type])
     |> cast_assoc(:ride, on_replace: :update)
     |> validate_required([:name, :birthdate, :email, :password, :balance, :card_number])
     |> unique_constraint(:email)

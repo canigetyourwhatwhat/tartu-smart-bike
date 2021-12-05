@@ -170,7 +170,9 @@ defmodule TartuSmarterBikeWeb.PageController do
                  where: u.email == ^param["gifting_user_email"], select: u
     gifting_user = Repo.one(query)
     exp_date_map = %{"1-year membership" => 365, "1-week membership" => 7, "1-day membership" => 1, "1-hour membership" => 0 }
+    cost_map = %{"1-year membership" => 30, "1-week membership" => 10, "1-day membership" => 5, "1-hour membership" => 2 }
     gifting_membership = exp_date_map[param["subscription_type"]]
+    cost = cost_map[param["subscription_type"]]
 
     case gifting_user == nil || user.email == gifting_user do
       true ->
@@ -188,9 +190,19 @@ defmodule TartuSmarterBikeWeb.PageController do
 
                 create_membership_invoice(conn, param)
 
-                conn
-                |> put_flash(:info, "Success")
-                |> redirect(to: Routes.page_path(conn, :index))
+                  if(user.balance >= cost) do
+                    User.changeset(user, %{})
+                    |> Changeset.put_change(:balance, user.balance - cost)
+                    |> Repo.update
+                    conn
+                    |> put_flash(:info, "Success. You balance has changed")
+                    |> redirect(to: Routes.page_path(conn, :index))
+
+                    else
+                      conn
+                      |> put_flash(:info, "Success. Credit card was used to pay")
+                      |> redirect(to: Routes.page_path(conn, :index))
+                    end
               else
                 conn
                 |> put_flash(:info, "The user has a longer membership")
@@ -206,10 +218,20 @@ defmodule TartuSmarterBikeWeb.PageController do
 
                 create_membership_invoice(conn, param)
 
-                conn
-                |> put_flash(:info, "Success")
-                |> redirect(to: Routes.page_path(conn, :index))
-                # add money subtraction from sender
+                if(user.balance >= cost) do
+                  User.changeset(user, %{})
+                  |> Changeset.put_change(:balance, user.balance - cost)
+                  |> Repo.update
+                  conn
+                  |> put_flash(:info, "Success. You balance has changed")
+                  |> redirect(to: Routes.page_path(conn, :index))
+
+                else
+                  conn
+                  |> put_flash(:info, "Success. Credit card was used to pay #{cost} euros for the gift")
+                  |> redirect(to: Routes.page_path(conn, :index))
+                end
+
               else
                 conn
                 |> put_flash(:info, "The user has a longer membership")
@@ -222,6 +244,20 @@ defmodule TartuSmarterBikeWeb.PageController do
                   |> Changeset.put_change(:subscription_type, param["subscription_type"])
                   |> Changeset.put_change(:expiration_date, Timex.shift(DateTime.utc_now(), hours: 1)|> DateTime.truncate(:second))
                   |> Repo.update
+
+                  if(user.balance >= cost) do
+                    User.changeset(user, %{})
+                    |> Changeset.put_change(:balance, user.balance - cost)
+                    |> Repo.update
+                    conn
+                    |> put_flash(:info, "Success. You balance has changed")
+                    |> redirect(to: Routes.page_path(conn, :index))
+                  else
+                    conn
+                    |> put_flash(:info, "Success. Credit card was used to pay #{cost} euros for the gift")
+                    |> redirect(to: Routes.page_path(conn, :index))
+                  end
+
               else
                 days = exp_date_map[param["subscription_type"]]
                 User.changeset(gifting_user, %{})
@@ -229,6 +265,19 @@ defmodule TartuSmarterBikeWeb.PageController do
                 |> Changeset.put_change(:expiration_date, Timex.shift(DateTime.utc_now(), days: days)|> DateTime.truncate(:second))
                 |> Repo.update
 
+                if(user.balance >= cost) do
+                  User.changeset(user, %{})
+                  |> Changeset.put_change(:balance, user.balance - cost)
+                  |> Repo.update
+                  conn
+                  |> put_flash(:info, "Success. You balance has changed")
+                  |> redirect(to: Routes.page_path(conn, :index))
+
+                else
+                  conn
+                  |> put_flash(:info, "Success. Credit card was used to pay")
+                  |> redirect(to: Routes.page_path(conn, :index))
+                end
               end
               create_membership_invoice(conn, param)
 

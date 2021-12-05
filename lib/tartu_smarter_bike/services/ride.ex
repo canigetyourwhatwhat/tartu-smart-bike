@@ -19,7 +19,7 @@ defmodule TartuSmarterBike.Services.Ride do
   @doc false
   def changeset(ride, attrs) do
     ride
-    |> cast(attrs, [:departure, :destination])
+    |> cast(attrs, [:departure, :destination, :distance])
     |> validate_required([])
   end
 end
